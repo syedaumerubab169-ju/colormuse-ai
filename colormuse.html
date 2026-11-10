@@ -1,0 +1,648 @@
+<title>ColorMuse AI</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,500;0,600;1,500&family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky brand bar, bottom tab bar on phones that moves into the bar on wide screens, one column on mobile and two on desktop. Signature element: a fan of tall swatch pills on the home page. */
+:root{
+  --bg:#F4F0F7; --surface:#FBF9F6; --surface-2:#ECE5F3; --ink:#251E30; --ink-2:#5F566D; --line:#DCD2E6;
+  --accent:#7A63C9; --on-accent:#FFFFFF; --lav:#CDBFF0; --beige:#E9DECF; --blush:#F2D8DE;
+  --ok-bg:#DDEFE5; --ok-fg:#1F6B49; --pro-bg:#F6E8C8; --pro-fg:#7A5410; --no-bg:#E8E2EF; --no-fg:#5F566D;
+  --f-display:'Bodoni Moda',Georgia,'Times New Roman',serif;
+  --f-body:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --f-mono:'DM Mono',ui-monospace,Menlo,Consolas,monospace;
+  --r:18px; --shadow:0 12px 30px -16px rgba(60,40,110,.45);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#151120; --surface:#1E1930; --surface-2:#2A2342; --ink:#F1ECF8; --ink-2:#B5ACC6; --line:#3A3158;
+  --accent:#B6A3F5; --on-accent:#1A1428; --lav:#3B3260; --beige:#3A3128; --blush:#47303A;
+  --ok-bg:#1F3A2D; --ok-fg:#9FDDBB; --pro-bg:#43361A; --pro-fg:#F0CF85; --no-bg:#2E2745; --no-fg:#B5ACC6;
+  --shadow:0 12px 30px -16px rgba(0,0,0,.8); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#151120; --surface:#1E1930; --surface-2:#2A2342; --ink:#F1ECF8; --ink-2:#B5ACC6; --line:#3A3158;
+  --accent:#B6A3F5; --on-accent:#1A1428; --lav:#3B3260; --beige:#3A3128; --blush:#47303A;
+  --ok-bg:#1F3A2D; --ok-fg:#9FDDBB; --pro-bg:#43361A; --pro-fg:#F0CF85; --no-bg:#2E2745; --no-fg:#B5ACC6;
+  --shadow:0 12px 30px -16px rgba(0,0,0,.8); color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-block:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:40}
+.wrap{max-width:1080px;margin-inline:auto}
+h1,h2,h3,p{margin:0}
+h1{font:500 clamp(2.4rem,9vw,4.4rem)/1.02 var(--f-display);letter-spacing:-.02em;text-wrap:balance}
+h1 em,h2 em{font-style:italic;color:var(--accent)}
+h2{font:500 clamp(1.7rem,5vw,2.3rem)/1.1 var(--f-display);letter-spacing:-.01em;text-wrap:balance}
+h3{font:700 1rem/1.3 var(--f-body)}
+.eyebrow{font:500 .72rem var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
+.lead{font-size:1.06rem;color:var(--ink-2);max-width:56ch}
+.muted{color:var(--ink-2)}
+.mono{font-family:var(--f-mono)}
+a{color:var(--accent)}
+button{font-family:inherit}
+
+/* top bar + tabs */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--bg);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px}
+.brand{font:600 1.45rem var(--f-display);letter-spacing:-.01em;text-decoration:none;color:var(--ink);display:flex;align-items:center;gap:10px}
+.brand i{font-style:italic;font-weight:500;color:var(--accent)}
+.brand svg{width:28px;height:28px}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:35;display:flex;justify-content:space-around;gap:4px;background:var(--surface);
+  border-top:1px solid var(--line);padding:6px max(12px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 4px;border-radius:14px;font-size:.72rem;font-weight:600;
+  color:var(--ink-2);text-decoration:none}
+.tab svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tab[aria-current="page"]{color:var(--accent);background:var(--surface-2)}
+main{padding-block:8px 110px}
+.view{padding-block:20px;display:grid;gap:28px}
+@media (min-width:860px){
+  .tabs{position:static;border:0;background:none;padding:0;flex:none}
+  .tab{flex-direction:row;gap:8px;font-size:.9rem;padding:8px 14px}
+  main{padding-bottom:56px}
+}
+
+/* buttons */
+.btn{appearance:none;border:0;border-radius:999px;padding:13px 22px;min-height:48px;font:600 .98rem var(--f-body);cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;transition:transform .15s,background .2s}
+.btn:active{transform:scale(.97)}
+.pickbtn{position:relative;overflow:hidden}
+.pickbtn .fin{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:200px;padding:0;border:0}
+.pickbtn:focus-within{outline:3px solid var(--accent);outline-offset:3px}
+.btn.primary{background:var(--accent);color:var(--on-accent)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
+.btn.small{min-height:40px;padding:8px 16px;font-size:.88rem}
+.btn:focus-visible,.tab:focus-visible,.chip:focus-visible,.dot:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.row-btns{display:flex;flex-wrap:wrap;gap:10px}
+
+/* hero */
+.hero{display:grid;gap:28px;align-items:center}
+.hero .copy{display:grid;gap:18px;justify-items:start}
+.badge{display:inline-flex;align-items:center;gap:8px;font:500 .74rem var(--f-mono);padding:7px 13px;border-radius:999px;background:var(--surface-2);color:var(--ink)}
+.badge i{width:8px;height:8px;border-radius:50%;background:#D79A2B;flex:none}
+.fan{display:flex;justify-content:center;align-items:flex-end;height:270px;padding-top:10px}
+.fan span{width:54px;height:215px;margin-inline:-7px;border-radius:999px;background:var(--c);transform-origin:50% 100%;
+  transform:rotate(var(--rot));box-shadow:var(--shadow);animation:fan 1s cubic-bezier(.2,.8,.2,1) backwards}
+.fan span:nth-child(2){animation-delay:.06s}.fan span:nth-child(3){animation-delay:.12s}.fan span:nth-child(4){animation-delay:.18s}.fan span:nth-child(5){animation-delay:.24s}
+@keyframes fan{from{transform:rotate(0)}}
+.fancap{text-align:center;font:400 .72rem var(--f-mono);color:var(--ink-2);margin-top:10px}
+@media (min-width:860px){.hero{grid-template-columns:1.15fr .85fr;gap:48px}.fan{height:340px}.fan span{width:68px;height:280px}}
+
+.steps{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));counter-reset:s}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:grid;gap:6px;counter-increment:s}
+.step::before{content:"Step " counter(s);font:500 .72rem var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.status{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.status .row{display:flex;justify-content:space-between;align-items:center;gap:8px 16px;flex-wrap:wrap;padding:13px 18px;border-top:1px solid var(--line)}
+.status .row:first-child{border-top:0}
+.status .row span:first-child{min-width:0;flex:1 1 220px}
+.pill{font:500 .72rem var(--f-mono);padding:4px 11px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok-fg)}.pill.pro{background:var(--pro-bg);color:var(--pro-fg)}.pill.no{background:var(--no-bg);color:var(--no-fg)}
+.panel{background:var(--surface-2);border-radius:var(--r);padding:22px;display:grid;gap:8px}
+.head{display:grid;gap:8px}
+
+/* studio */
+.studio{display:grid;gap:22px}
+.drop{border:2px dashed var(--line);border-radius:24px;padding:34px 18px;text-align:center;background:var(--surface);display:grid;gap:16px;justify-items:center}
+.drop.over{border-color:var(--accent);background:var(--surface-2)}
+.stagebox{display:grid;gap:14px;justify-items:center}
+.stage{position:relative;display:inline-block;max-width:100%;border-radius:20px;overflow:hidden;line-height:0;box-shadow:var(--shadow)}
+.stage canvas{display:block;max-width:100%;max-height:62vh;width:auto;height:auto;cursor:crosshair;touch-action:manipulation}
+.guide{position:absolute;left:30%;top:26%;width:40%;height:40%;border:2px dashed rgba(255,255,255,.9);border-radius:50%;pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.marker{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.5);pointer-events:none}
+.tips{display:grid;gap:8px;padding:0;margin:0;list-style:none}
+.tips li{padding-left:22px;position:relative;color:var(--ink-2);font-size:.94rem}
+.tips li::before{content:"";position:absolute;left:2px;top:.6em;width:9px;height:9px;border-radius:50%;background:var(--lav)}
+.msg{min-height:1.4em;font-size:.94rem;color:var(--ink-2)}
+.msg.warn{color:var(--pro-fg);background:var(--pro-bg);padding:10px 14px;border-radius:12px}
+.demos{display:flex;flex-wrap:wrap;gap:10px}
+.dot{width:46px;height:46px;border-radius:50%;border:3px solid var(--surface);box-shadow:0 0 0 1.5px var(--line);cursor:pointer;padding:0}
+details{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+summary{cursor:pointer;font-weight:600}
+details p{margin-top:8px;color:var(--ink-2);font-size:.94rem}
+@media (min-width:860px){.studio{grid-template-columns:1.2fr .8fr;align-items:start}}
+
+/* results */
+.banner{padding:12px 16px;border-radius:14px;background:var(--pro-bg);color:var(--pro-fg);font-size:.92rem}
+.dash{display:grid;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;display:grid;gap:14px;align-content:start;min-width:0}
+.summary{display:grid;gap:20px;align-items:center}
+.skin{min-height:170px;border-radius:26px;box-shadow:var(--shadow)}
+.facts{display:grid;gap:12px;min-width:0}
+.big{font:500 clamp(2rem,7vw,3rem)/1 var(--f-display);letter-spacing:-.02em}
+.meta{display:flex;flex-wrap:wrap;gap:8px}
+.tag{font:500 .76rem var(--f-mono);padding:5px 11px;border-radius:999px;background:var(--surface-2)}
+.meter{height:12px;border-radius:999px;position:relative;background:linear-gradient(90deg,#C9B8F0,#EFD9E0 35%,#E6DCCB 50%,#F0DFA8 75%,#E8BE6A);margin-block:10px 4px}
+.meter b{position:absolute;top:50%;width:24px;height:24px;border-radius:50%;background:var(--surface);border:3px solid var(--ink);transform:translate(-50%,-50%);transition:left .7s cubic-bezier(.2,.8,.2,1)}
+.scale{display:flex;justify-content:space-between;font:400 .72rem var(--f-mono);color:var(--ink-2)}
+.conf{display:flex;align-items:center;gap:14px}
+.ring{width:64px;height:64px;flex:none}
+.ring circle{fill:none;stroke-width:7}
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+.chip{border:0;border-radius:16px;min-height:96px;padding:11px;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;
+  text-align:left;font:600 .84rem/1.2 var(--f-body);cursor:pointer;transition:transform .15s;position:relative}
+.chip:active{transform:scale(.96)}
+.chip small{font:400 .68rem var(--f-mono);opacity:.9;margin-top:3px}
+.chip.avoid::after{content:"";position:absolute;inset:10px 10px auto auto;width:18px;height:2px;background:currentColor;transform:rotate(-45deg);opacity:.7}
+.combos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.combo{background:var(--surface-2);border-radius:16px;padding:14px 10px;display:grid;gap:6px;justify-items:center;text-align:center;font-size:.82rem}
+.combo svg{width:78px;height:auto}
+.combo b{font-weight:700}
+.recs{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.rec{background:var(--surface-2);border-radius:16px;padding:16px;display:grid;gap:6px;align-content:start}
+.rec h3{font-size:.95rem}.rec p{font-size:.92rem;color:var(--ink-2)}
+.savebar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.savebar input{flex:1 1 200px;min-width:0;min-height:48px;border-radius:999px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);padding:0 18px;font:500 1rem var(--f-body)}
+.notes{display:grid;gap:6px;margin:0;padding:0;list-style:none;font-size:.9rem;color:var(--ink-2)}
+@media (min-width:860px){
+  .dash{grid-template-columns:1fr 1fr}.span2{grid-column:1/-1}
+  .summary{grid-template-columns:230px 1fr;gap:32px}
+}
+
+/* saved */
+.saved-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+.strip{display:flex;height:48px;border-radius:12px;overflow:hidden}
+.strip span{flex:1}
+.empty{border:2px dashed var(--line);border-radius:24px;padding:36px 20px;text-align:center;display:grid;gap:14px;justify-items:center}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);
+  padding:11px 18px;border-radius:999px;font-size:.88rem;z-index:60;max-width:calc(100% - 32px);text-align:center}
+@media (min-width:860px){.toast{bottom:32px}}
+footer{padding-block:8px 24px;color:var(--ink-2);font-size:.84rem}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#home" aria-label="ColorMuse AI home">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><g transform="translate(16 28)"><rect x="-3" y="-24" width="6" height="24" rx="3" fill="#CDBFF0" transform="rotate(-30)"/><rect x="-3" y="-24" width="6" height="24" rx="3" fill="#E9B8C6" transform="rotate(-10)"/><rect x="-3" y="-24" width="6" height="24" rx="3" fill="#7A63C9" transform="rotate(10)"/><rect x="-3" y="-24" width="6" height="24" rx="3" fill="#D9C7A8" transform="rotate(30)"/></g></svg>
+      <span>ColorMuse <i>AI</i></span>
+    </a>
+    <nav class="tabs" aria-label="Main">
+      <a class="tab" data-v="home" href="#home"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>Home</a>
+      <a class="tab" data-v="studio" href="#studio"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Studio</a>
+      <a class="tab" data-v="results" href="#results"><svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><circle cx="12" cy="15" r="3"/></svg>Results</a>
+      <a class="tab" data-v="saved" href="#saved"><svg viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg>Saved</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- HOME -->
+    <section class="view" id="v-home">
+      <div class="hero">
+        <div class="copy">
+          <span class="badge"><i></i>Prototype build · color math runs on your device</span>
+          <h1>Colors that <em>sit well</em> with your skin.</h1>
+          <p class="lead">Add a face photo and ColorMuse AI reads your skin color and undertone, then builds a palette, outfit combinations and styling notes you can save.</p>
+          <div class="row-btns">
+            <label class="btn primary pickbtn">Upload a photo<input type="file" class="fin" accept="image/*" aria-label="Upload a photo"></label>
+            <label class="btn ghost pickbtn">Take a selfie<input type="file" class="fin" accept="image/*" capture="user" aria-label="Take a selfie"></label>
+          </div>
+          <p class="muted" style="font-size:.88rem">No account. Your photo is not uploaded and not stored.</p>
+        </div>
+        <div>
+          <div class="fan" aria-hidden="true">
+            <span style="--c:#CDBFF0;--rot:-26deg"></span><span style="--c:#F2D8DE;--rot:-13deg"></span><span style="--c:#E9DECF;--rot:0deg"></span><span style="--c:#C9D8C3;--rot:13deg"></span><span style="--c:#BFD3EA;--rot:26deg"></span>
+          </div>
+          <p class="fancap">Illustration only. Your palette is built from your own photo.</p>
+        </div>
+      </div>
+
+      <div class="head"><span class="eyebrow">How it works</span><h2>Three taps from photo to palette</h2></div>
+      <div class="steps">
+        <div class="step"><h3>Add a photo</h3><p class="muted">Upload one or take a selfie in daylight. Tap a cheek or forehead to choose where to measure.</p></div>
+        <div class="step"><h3>Read your skin</h3><p class="muted">The page measures the color of that patch and estimates depth and undertone: warm, cool, neutral or uncertain.</p></div>
+        <div class="step"><h3>Wear the result</h3><p class="muted">Get shades to wear, shades to test with care, outfit combinations and notes. Save any palette.</p></div>
+      </div>
+
+      <div class="head"><span class="eyebrow">Honest status</span><h2>What is real and what is prototype</h2></div>
+      <div class="status">
+        <div class="row"><span>Photo upload and selfie capture</span><span class="pill ok">Working</span></div>
+        <div class="row"><span>Measuring skin pixels from your photo</span><span class="pill ok">Working</span></div>
+        <div class="row"><span>Undertone estimate from the measured color</span><span class="pill pro">Prototype rule</span></div>
+        <div class="row"><span>Palettes, combinations and style notes</span><span class="pill pro">Hand-written rules</span></div>
+        <div class="row"><span>Saving palettes</span><span class="pill pro">This browser only</span></div>
+        <div class="row"><span>Trained AI model, face detection, lighting correction</span><span class="pill no">Not built yet</span></div>
+      </div>
+      <div class="panel">
+        <h3>Privacy</h3>
+        <p class="muted">The photo is read inside this page and drawn on your screen. It is never sent anywhere. Clearing the photo or closing the page removes it. Saved palettes keep only colors and names, never the photo.</p>
+      </div>
+      <footer>ColorMuse AI is a styling aid and not a medical or dermatological tool. Results are estimates and depend on lighting and your camera.</footer>
+    </section>
+
+    <!-- STUDIO -->
+    <section class="view" id="v-studio" hidden>
+      <div class="head"><span class="eyebrow">Studio</span><h2>Add your photo</h2></div>
+      <div class="studio">
+        <div>
+          <div class="drop" id="drop">
+            <p><b>Drop a photo here</b> or choose one</p>
+            <div class="row-btns" style="justify-content:center">
+              <label class="btn primary pickbtn">Upload a photo<input type="file" class="fin" accept="image/*" aria-label="Upload a photo"></label>
+              <label class="btn ghost pickbtn">Take a selfie<input type="file" class="fin" accept="image/*" capture="user" aria-label="Take a selfie"></label>
+            </div>
+            <p class="muted" style="font-size:.86rem">Taking a selfie opens your phone's camera app.</p>
+          </div>
+          <div class="stagebox" id="stagebox" hidden>
+            <div class="stage" id="stage">
+              <canvas id="photo" aria-label="Your photo. Tap a cheek or forehead to choose where to measure."></canvas>
+              <div class="guide" id="guide"></div>
+              <div class="marker" id="marker" hidden></div>
+            </div>
+            <p class="msg" id="stageHint">Tap a cheek or the forehead in even light. Or analyze as is and the page will measure inside the dashed oval.</p>
+            <div class="row-btns" style="justify-content:center">
+              <button class="btn primary" type="button" id="btnAnalyze">Analyze my colors</button>
+              <label class="btn ghost pickbtn">Choose another<input type="file" class="fin" accept="image/*" aria-label="Choose another"></label>
+              <button class="btn ghost" type="button" id="btnClear">Clear photo</button>
+            </div>
+          </div>
+          <p class="msg" id="studioMsg" role="status" style="margin-top:12px"></p>
+        </div>
+        <div style="display:grid;gap:18px">
+          <div class="card">
+            <h3>For the most reliable reading</h3>
+            <ul class="tips">
+              <li>Stand by a window in daylight, facing the light.</li>
+              <li>Turn off beauty filters, flash and color effects.</li>
+              <li>Remove heavy makeup if you can, and avoid strong colored walls.</li>
+              <li>Tap a cheek or forehead, away from shadows and shiny spots.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>No photo handy?</h3>
+            <p class="muted" style="font-size:.92rem">Try a demo skin tone to see what the results look like. These are sample colors, not a measurement of you.</p>
+            <div class="demos" id="demos"></div>
+          </div>
+          <details>
+            <summary>Camera not opening?</summary>
+            <p>Selfie opens your phone's camera app, so this page never asks for camera access itself. If nothing opens, go to Android Settings, Apps, your browser, Permissions, and allow Camera. You can also take the photo in your camera app and use Upload a photo.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULTS -->
+    <section class="view" id="v-results" hidden>
+      <div class="head"><span class="eyebrow">Results</span><h2>Your color dashboard</h2></div>
+      <div class="banner" id="resBanner"></div>
+      <div id="resBody" class="dash"></div>
+    </section>
+
+    <!-- SAVED -->
+    <section class="view" id="v-saved" hidden>
+      <div class="head"><span class="eyebrow">Saved</span><h2>Your palettes</h2><p class="muted">Saved palettes live in this browser on this device. Copy the hex codes if you want to keep them elsewhere.</p></div>
+      <div id="savedList"></div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script>
+/* ===== ColorMuse core: color math, skin sampling, undertone rule ===== */
+const lin = c => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+function rgbToLab(r, g, b) {
+  const R = lin(r), G = lin(g), B = lin(b);
+  const X = (0.4124564 * R + 0.3575761 * G + 0.1804375 * B) / 0.95047;
+  const Y = 0.2126729 * R + 0.7151522 * G + 0.0721750 * B;
+  const Z = (0.0193339 * R + 0.1191920 * G + 0.9503041 * B) / 1.08883;
+  const f = t => t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116;
+  const fx = f(X), fy = f(Y), fz = f(Z);
+  return { L: 116 * fy - 16, a: 500 * (fx - fy), b: 200 * (fy - fz) };
+}
+const hueOf = lab => { const h = Math.atan2(lab.b, lab.a) * 180 / Math.PI; return h < 0 ? h + 360 : h; };
+const toHex = (r, g, b) => '#' + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('').toUpperCase();
+const hexToRgb = h => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+const textOn = hex => { const [r, g, b] = hexToRgb(hex); return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) > 0.36 ? '#1D1726' : '#FFFFFF'; };
+const median = arr => { const s = Array.from(arr).sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+/* A pixel looks like skin if its YCbCr values fall in the common skin range. */
+function looksLikeSkin(r, g, b) {
+  const Y = 0.299 * r + 0.587 * g + 0.114 * b;
+  const Cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
+  const Cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
+  return Y > 35 && Y < 245 && Cb >= 77 && Cb <= 127 && Cr >= 133 && Cr <= 173 && r > g && r > b;
+}
+
+/* Measure a patch of skin. pt = {x,y} for a tapped spot, or null for the automatic oval. */
+function sampleSkin(data, w, h, pt) {
+  let x0, x1, y0, y1, inside;
+  if (pt) {
+    const rad = Math.max(6, Math.round(Math.min(w, h) * 0.035));
+    x0 = Math.max(0, pt.x - rad); x1 = Math.min(w - 1, pt.x + rad);
+    y0 = Math.max(0, pt.y - rad); y1 = Math.min(h - 1, pt.y + rad);
+    inside = (x, y) => (x - pt.x) * (x - pt.x) + (y - pt.y) * (y - pt.y) <= rad * rad;
+  } else {
+    const cx = w * 0.5, cy = h * 0.46, rx = w * 0.2, ry = h * 0.2;
+    x0 = Math.max(0, Math.floor(cx - rx)); x1 = Math.min(w - 1, Math.ceil(cx + rx));
+    y0 = Math.max(0, Math.floor(cy - ry)); y1 = Math.min(h - 1, Math.ceil(cy + ry));
+    inside = (x, y) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1;
+  }
+  const px = []; let total = 0;
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    if (!inside(x, y)) continue;
+    total++;
+    const i = (y * w + x) * 4, r = data[i], g = data[i + 1], b = data[i + 2];
+    if (!pt && !looksLikeSkin(r, g, b)) continue;
+    px.push([r, g, b, 0.299 * r + 0.587 * g + 0.114 * b]);
+  }
+  if (px.length < 12) return null;
+  const clip = px.filter(p => Math.max(p[0], p[1], p[2]) >= 250).length / px.length;
+  px.sort((p, q) => p[3] - q[3]);
+  const kept = px.slice(Math.floor(px.length * 0.15), Math.ceil(px.length * 0.9));
+  const rgb = [0, 1, 2].map(c => median(kept.map(p => p[c])));
+  const step = Math.max(1, Math.floor(kept.length / 600));
+  const hues = [];
+  for (let i = 0; i < kept.length; i += step) hues.push(hueOf(rgbToLab(kept[i][0], kept[i][1], kept[i][2])));
+  const mean = hues.reduce((s, v) => s + v, 0) / hues.length;
+  const hueSd = Math.sqrt(hues.reduce((s, v) => s + (v - mean) ** 2, 0) / hues.length);
+  return { rgb, n: kept.length, hueSd, clip, coverage: px.length / Math.max(1, total), mode: pt ? 'tap' : 'auto' };
+}
+
+/* Undertone rule: where the skin's hue angle falls between pink-red (cool) and yellow-gold (warm). */
+const HUE_CENTER = 52, HUE_BAND = 4;
+function readSkin(rgb, stats) {
+  const lab = rgbToLab(rgb[0], rgb[1], rgb[2]);
+  const h = hueOf(lab), C = Math.hypot(lab.a, lab.b), warmth = h - HUE_CENTER;
+  const raw = warmth > HUE_BAND ? 'Warm' : warmth < -HUE_BAND ? 'Cool' : 'Neutral';
+  const demo = stats.mode === 'demo';
+  const countS = demo ? 1 : clamp(stats.n / 400, 0, 1);
+  const spreadS = demo ? 1 : clamp(1 - (stats.hueSd - 3) / 12, 0, 1);
+  const lightS = (lab.L < 22 || lab.L > 92) ? 0.3 : (lab.L < 30 || lab.L > 88) ? 0.6 : 1;
+  const marginS = raw === 'Neutral' ? 1 - 0.5 * Math.abs(warmth) / HUE_BAND : clamp(0.5 + (Math.abs(warmth) - HUE_BAND) / 8, 0.5, 1);
+  const clipS = demo ? 1 : clamp(1 - stats.clip * 2, 0.3, 1);
+  const conf = Math.round(100 * (0.25 * countS + 0.22 * spreadS + 0.18 * lightS + 0.25 * marginS + 0.10 * clipS));
+  const notSkin = !demo && !looksLikeSkin(Math.round(rgb[0]), Math.round(rgb[1]), Math.round(rgb[2]));
+  const uncertain = conf < 55 || C < 7 || notSkin;
+  return { lab, h, C, warmth, raw, notSkin, undertone: uncertain ? 'Uncertain' : raw, confidence: notSkin ? Math.min(conf, 35) : conf };
+}
+const depthOf = L => L > 72 ? 'Light' : L > 62 ? 'Light-medium' : L > 52 ? 'Medium' : L > 42 ? 'Tan' : 'Deep';
+/* ===== ColorMuse data: hand-written palettes and styling notes (not learned by a model) ===== */
+const DEMOS = [
+  ['Fair cool', '#EFCFCB'], ['Fair warm', '#F0CFAE'], ['Light neutral', '#EECBBB'], ['Medium warm', '#D9A06A'],
+  ['Medium cool', '#C58E86'], ['Medium neutral', '#B27F63'], ['Tan warm', '#9A6A3E'], ['Deep warm', '#7A4B2A'],
+  ['Deep neutral', '#6F4634'], ['Deep cool', '#6B4338']
+];
+/* [name, hex, intensity] where s = soft, m = medium, r = rich */
+const PAL = {
+  warm: [['Camel','#C4975F','m'],['Olive','#77804A','m'],['Mustard','#D9A630','r'],['Coral','#F18B6E','m'],['Warm teal','#2B7A74','r'],['Rust','#A5502A','r'],['Ivory','#F3E9D2','s'],['Chocolate','#5A3828','r'],['Peach','#F8BC98','s'],['Moss','#5C6B38','r'],['Apricot','#F4A860','m'],['Butter','#F2DE9B','s'],['Warm sage','#A9B58A','s'],['Burnt orange','#CC5A1F','r'],['Warm red','#C0392B','r']],
+  cool: [['Lavender','#A99BE0','s'],['Dusty rose','#D79AAE','s'],['Sapphire','#2F4EA2','r'],['Emerald','#1E8C6A','r'],['Plum','#6D3A6E','r'],['Icy blue','#BCD8EE','s'],['Charcoal','#3A3F4B','m'],['Raspberry','#B3345F','r'],['Silver grey','#AEB4C0','s'],['Navy','#1E2A5A','r'],['Orchid pink','#F0A6C8','s'],['Teal blue','#2D8AA6','m'],['Soft white','#F4F6FA','s'],['Cool red','#B0173B','r'],['Periwinkle','#8E9BE8','m']],
+  neutral: [['Soft rose','#D98FA0','s'],['Sage','#94A98A','s'],['Dusty blue','#7C9CC0','m'],['Mauve','#A8809B','m'],['Taupe','#A38F85','m'],['Deep teal','#2F6F73','r'],['Burgundy','#7B2D3F','r'],['Stone','#CFC6BA','s'],['Ink navy','#28324F','r'],['Warm pink','#E9A0A0','m'],['Soft olive','#8B9360','m'],['Cocoa','#6B4A3E','r'],['Lilac grey','#B9B2CC','s'],['Jade','#3E8F7B','r'],['Blush','#EBC3C0','s']]
+};
+const AVOID = {
+  warm: [['Icy blue','#BFD9EE'],['Cool fuchsia','#C0267A'],['Steel grey','#8C94A3'],['Blue-black','#14182B']],
+  cool: [['Mustard','#D4A431'],['Bright orange','#E27D2F'],['Khaki olive','#8E8A4A'],['Golden brown','#8B5E3C']],
+  neutral: [['Neon lime','#C5E80C'],['Hot orange','#F2641A'],['Icy lemon','#F4F1A0'],['Heavy black','#0B0B0F']]
+};
+const BASES = {
+  warm: [['Ivory','#F3E9D2'],['Espresso','#3E2A20'],['Khaki tan','#B9A27A']],
+  cool: [['Soft white','#F4F6FA'],['Charcoal','#3A3F4B'],['Navy','#1E2A5A']],
+  neutral: [['Stone','#CFC6BA'],['Ink navy','#28324F'],['Taupe','#A38F85']]
+};
+const METALS = { Warm: 'Gold, bronze and copper', Cool: 'Silver, platinum and white gold', Neutral: 'Rose gold or mixed metals', Uncertain: 'Try gold and silver side by side' };
+const FAMILY = {
+  Warm: { Light: 'Soft Warm', 'Light-medium': 'Light Warm', Medium: 'Golden Warm', Tan: 'Rich Warm', Deep: 'Deep Warm' },
+  Cool: { Light: 'Soft Cool', 'Light-medium': 'Light Cool', Medium: 'Rosy Cool', Tan: 'Rich Cool', Deep: 'Deep Cool' },
+  Neutral: { Light: 'Soft Neutral', 'Light-medium': 'Light Neutral', Medium: 'Balanced Neutral', Tan: 'Rich Neutral', Deep: 'Deep Neutral' }
+};
+const DEPTH_NOTE = {
+  Light: 'Light skin looks best in soft to medium contrast. Very dark or very bright colors near the face can feel heavy, so keep them for bottoms and layers.',
+  'Light-medium': 'You can carry medium contrast. Pair a mid-tone top with a deeper bottom for a balanced look.',
+  Medium: 'You suit both muted and saturated shades, so the list leans toward balanced, medium-depth colors.',
+  Tan: 'Richer, clearer colors read well against your depth. Choose pastels that have some saturation so they do not wash out.',
+  Deep: 'Deep skin glows in rich, saturated and high-contrast shades. Very pale, chalky pastels can look flat, so pick clearer, brighter versions.'
+};
+const DEPTH_PREF = { Light: ['s','m','r'], 'Light-medium': ['s','m','r'], Medium: ['m','s','r'], Tan: ['r','m','s'], Deep: ['r','m','s'] };
+const RECS = {
+  warm: [
+    ['Near your face','Camel, olive, apricot and peach sit close to the golden side of your skin. Hold a color under your chin in daylight and keep the ones that make your face look brighter and more even.'],
+    ['Work','A camel or olive blazer, an ivory shirt and chocolate or khaki trousers. Warm teal gives a cooler-looking option that still suits you.'],
+    ['Weekend','Rust or mustard knitwear, warm-wash denim, and tan or cognac leather shoes and bags.'],
+    ['Evening','Moss, burnt orange or warm red in a matte or satin fabric. Gold or champagne sequins work better than icy ones.'],
+    ['Swap these','Choose espresso instead of black and ivory instead of stark white. Both soften the contrast against your skin.'],
+    ['Jewelry and prints','Gold, bronze or copper, and tortoiseshell frames. Prints with earthy greens, browns and warm reds.']],
+  cool: [
+    ['Near your face','Lavender, dusty rose, periwinkle and sapphire echo the pink or blue in your skin. Hold a color under your chin in daylight and keep the ones that make your face look clearer.'],
+    ['Work','A navy or charcoal blazer with a soft white shirt. Plum or teal blue knits add color without adding warmth.'],
+    ['Weekend','Blue-black or classic wash denim, a raspberry or periwinkle sweater, and grey or navy sneakers.'],
+    ['Evening','Emerald, cool red or deep plum in satin or velvet. Silver or icy details look good on you.'],
+    ['Swap these','Choose charcoal or navy instead of brown, and soft white instead of cream or yellow-based white.'],
+    ['Jewelry and prints','Silver, platinum or white gold. Prints in blue, pink, grey and berry shades.']],
+  neutral: [
+    ['Near your face','You sit between warm and cool, so muted, medium-saturation colors work best: sage, dusty blue, soft rose and mauve. Test very sharp neon or very icy shades first, since they are the likeliest to clash.'],
+    ['Work','A taupe or ink navy blazer with a stone shirt. Deep teal or burgundy adds color without leaning warm or cool.'],
+    ['Weekend','Soft olive or warm pink knits, mid-wash denim and a taupe bag.'],
+    ['Evening','Burgundy, jade or ink navy. Rose gold details sit well with your skin.'],
+    ['Swap these','Use cocoa or ink navy as your dark neutral and stone or soft white as your light one.'],
+    ['Jewelry and prints','Rose gold or mixed metals. Prints with muted, balanced colors rather than sharp contrast.']],
+  uncertain: [
+    ['Do a drape test','In daylight, hold a camel top and then a lavender top under your chin. The one that makes your skin look clearer and less tired points to your side.'],
+    ['Start versatile','Soft rose, sage, dusty blue and stone are safe choices while you find your side.'],
+    ['Retake the photo','Stand by a window, use no filters, and avoid strong colored walls. Then tap a cheek or the forehead before analyzing.'],
+    ['Jewelry','Try gold and silver next to each other and see which one brings out your skin.']]
+};
+/* ===== ColorMuse app: routing, photo handling, results, saved palettes ===== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const KEY = 'colormuse.saved.v1', MAX_SAVED = 30;
+const state = { hasPhoto: false, point: null, result: null, saved: [] };
+const cv = $('#photo'), ctx = cv.getContext('2d', { willReadFrequently: true });
+
+/* ---------- toast + clipboard ---------- */
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600);
+}
+async function copyText(text, okMsg) {
+  try { await navigator.clipboard.writeText(text); toast(okMsg); return; } catch (e) { /* try fallback */ }
+  try {
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand('copy'); ta.remove();
+    toast(ok ? okMsg : 'Copy is not available here. Long-press the hex code to copy it.');
+  } catch (e) { toast('Copy is not available here. Long-press the hex code to copy it.'); }
+}
+
+/* ---------- routing ---------- */
+const VIEWS = ['home', 'studio', 'results', 'saved'];
+function route() {
+  const h = (location.hash || '#home').slice(1);
+  const v = VIEWS.includes(h) ? h : 'home';
+  VIEWS.forEach(n => { $('#v-' + n).hidden = n !== v; });
+  document.querySelectorAll('.tab').forEach(a => a.setAttribute('aria-current', a.dataset.v === v ? 'page' : 'false'));
+  window.scrollTo(0, 0);
+}
+addEventListener('hashchange', route);
+const go = v => { if (location.hash === '#' + v) route(); else location.hash = v; };
+
+/* ---------- photo handling ---------- */
+document.querySelectorAll('.fin').forEach(inp => inp.addEventListener('change', e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; handleFile(f); }));
+addEventListener('dragover', e => { e.preventDefault(); $('#drop').classList.add('over'); });
+addEventListener('dragleave', () => $('#drop').classList.remove('over'));
+addEventListener('drop', e => { e.preventDefault(); $('#drop').classList.remove('over'); handleFile(e.dataTransfer && e.dataTransfer.files[0]); });
+
+function handleFile(f) {
+  if (!f) return;
+  if (!/^image\//.test(f.type)) { go('studio'); setMsg('Please choose an image file (JPG or PNG).', true); return; }
+  if (f.size > 25 * 1024 * 1024) { go('studio'); setMsg('That photo is larger than 25 MB. Choose a smaller one.', true); return; }
+  const url = URL.createObjectURL(f), img = new Image();
+  img.onload = () => { URL.revokeObjectURL(url); drawPhoto(img); go('studio'); };
+  img.onerror = () => { URL.revokeObjectURL(url); go('studio'); setMsg("That file could not be opened as a photo. Try a JPG or PNG.", true); };
+  img.src = url;
+}
+function setMsg(t, warn) { const m = $('#studioMsg'); m.textContent = t; m.classList.toggle('warn', !!warn); }
+function drawPhoto(img) {
+  const s = Math.min(1, 720 / Math.max(img.naturalWidth, img.naturalHeight));
+  cv.width = Math.max(1, Math.round(img.naturalWidth * s)); cv.height = Math.max(1, Math.round(img.naturalHeight * s));
+  ctx.drawImage(img, 0, 0, cv.width, cv.height);
+  state.hasPhoto = true; state.point = null;
+  $('#drop').hidden = true; $('#stagebox').hidden = false; $('#guide').hidden = false; $('#marker').hidden = true;
+  $('#stageHint').textContent = 'Tap a cheek or the forehead in even light. Or analyze as is and the page will measure inside the dashed oval.';
+  setMsg('');
+}
+cv.addEventListener('click', e => {
+  const r = cv.getBoundingClientRect();
+  const x = Math.round((e.clientX - r.left) / r.width * cv.width), y = Math.round((e.clientY - r.top) / r.height * cv.height);
+  state.point = { x, y };
+  const m = $('#marker'); m.style.left = (x / cv.width * 100) + '%'; m.style.top = (y / cv.height * 100) + '%'; m.hidden = false;
+  $('#guide').hidden = true;
+  $('#stageHint').textContent = 'Spot chosen. Tap somewhere else to move it, then press Analyze.';
+});
+$('#btnClear').addEventListener('click', () => {
+  ctx.clearRect(0, 0, cv.width, cv.height); cv.width = 1; cv.height = 1;
+  state.hasPhoto = false; state.point = null;
+  $('#drop').hidden = false; $('#stagebox').hidden = true; setMsg('Photo cleared from this page.');
+});
+$('#btnAnalyze').addEventListener('click', () => {
+  if (!state.hasPhoto) return;
+  const d = ctx.getImageData(0, 0, cv.width, cv.height);
+  const stats = sampleSkin(d.data, cv.width, cv.height, state.point);
+  if (!stats) { setMsg('Could not find clear skin there. Tap a cheek or the forehead, away from hair, shadows and bright spots, then try again.', true); return; }
+  state.result = buildResult(stats.rgb, stats, 'photo', '');
+  renderResults(); go('results');
+});
+$('#demos').innerHTML = DEMOS.map(d => `<button class="dot" type="button" style="background:${d[1]}" data-demo="${d[1]}" data-name="${esc(d[0])}" aria-label="Demo tone: ${esc(d[0])}" title="${esc(d[0])}"></button>`).join('');
+$('#demos').addEventListener('click', e => {
+  const b = e.target.closest('[data-demo]'); if (!b) return;
+  state.result = buildResult(hexToRgb(b.dataset.demo), { mode: 'demo' }, 'demo', b.dataset.name);
+  renderResults(); go('results');
+});
+
+/* ---------- build a result from a measured skin color ---------- */
+function buildResult(rgb, stats, source, label) {
+  const rd = readSkin(rgb, stats), depth = depthOf(rd.lab.L);
+  const key = rd.undertone === 'Uncertain' ? 'neutral' : rd.undertone.toLowerCase();
+  const pref = DEPTH_PREF[depth];
+  const palette = PAL[key].map((c, i) => ({ name: c[0], hex: c[1], t: c[2], i }))
+    .sort((a, b) => pref.indexOf(a.t) - pref.indexOf(b.t) || a.i - b.i).slice(0, 8).map(c => ({ name: c.name, hex: c.hex }));
+  const bases = BASES[key].map(c => ({ name: c[0], hex: c[1] }));
+  const combos = [0, 1, 2, 3, 4, 5].map(i => ({ top: palette[i], bottom: bases[i % 3], accent: palette[(i + 3) % palette.length] }));
+  const notes = [];
+  if (stats.mode !== 'demo') {
+    if (stats.clip > 0.15) notes.push('Part of the measured area is overexposed, which hides true skin color.');
+    if (stats.mode === 'auto' && stats.coverage < 0.35) notes.push('The automatic oval found little skin. Tapping a cheek or the forehead gives a better reading.');
+    if (stats.hueSd > 12) notes.push('Skin color varies a lot in the measured area (shadow, makeup or facial hair). Tap an even patch such as a cheek.');
+  }
+  if (rd.lab.L < 28 || rd.lab.L > 90) notes.push('The measured color is very dark or very bright, so lighting is affecting the result.');
+  if (rd.notSkin) notes.push('The measured color does not look like skin. Tap a cheek or the forehead and analyze again.');
+  else if (rd.undertone === 'Uncertain') notes.push(`The reading leans ${rd.warmth > 0 ? 'slightly warm' : 'slightly cool'} but is too close to call. Use the drape test below.`);
+  notes.push('Phone cameras adjust color automatically, so treat this as an estimate and confirm with a drape test in daylight.');
+  return {
+    source, label, mode: stats.mode, n: stats.n || 0,
+    hex: toHex(rgb[0], rgb[1], rgb[2]), L: rd.lab.L, a: rd.lab.a, b: rd.lab.b, h: rd.h, warmth: rd.warmth,
+    undertone: rd.undertone, confidence: rd.confidence, depth,
+    family: rd.undertone === 'Uncertain' ? 'Flexible palette' : FAMILY[rd.undertone][depth],
+    palette, avoid: AVOID[key].map(c => ({ name: c[0], hex: c[1] })), bases, combos,
+    metals: METALS[rd.undertone], depthNote: DEPTH_NOTE[depth],
+    recs: RECS[rd.undertone === 'Uncertain' ? 'uncertain' : key], notes, createdAt: Date.now()
+  };
+}
+
+/* ---------- render results ---------- */
+function chip(c, cls) { return `<button class="chip ${cls || ''}" type="button" data-hex="${c.hex}" style="background:${c.hex};color:${textOn(c.hex)}" aria-label="${esc(c.name)} ${c.hex}. Tap to copy.">${esc(c.name)}<small>${c.hex}</small></button>`; }
+function outfitSvg(t, b, a) {
+  return `<svg viewBox="0 0 80 112" aria-hidden="true"><path d="M20 8 L32 4 Q40 12 48 4 L60 8 L74 28 L64 35 L58 27 L58 58 L22 58 L22 27 L16 35 L6 28 Z" fill="${t}" stroke="rgba(0,0,0,.18)"/><path d="M23 60 L57 60 L59 108 L44 108 L40 74 L36 108 L21 108 Z" fill="${b}" stroke="rgba(0,0,0,.18)"/><rect x="60" y="64" width="15" height="17" rx="3" fill="${a}" stroke="rgba(0,0,0,.18)"/><path d="M63 64 q4.5 -9 9 0" fill="none" stroke="${a}" stroke-width="2"/></svg>`;
+}
+function sourceLine(r) {
+  if (r.source === 'example') return 'Example result from a demo skin tone, not from you. Add a photo in Studio to get your own.';
+  if (r.source === 'demo') return `Demo tone "${r.label}". No photo was used.`;
+  if (r.source === 'saved') return 'Opened from your saved palettes.';
+  return `Measured from your photo (${r.mode === 'tap' ? 'the spot you tapped' : 'the automatic oval'}, ${r.n} skin pixels). This is an estimate from a simple color rule, not a trained AI model.`;
+}
+function renderResults() {
+  const r = state.result, pct = 50 + clamp(r.warmth, -16, 16) / 16 * 50, circ = 2 * Math.PI * 26;
+  const ringColor = r.confidence >= 75 ? '#3E9B72' : r.confidence >= 55 ? '#D79A2B' : '#B8A9C9';
+  const date = new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  $('#resBanner').textContent = sourceLine(r);
+  $('#resBody').innerHTML = `
+    <div class="card span2"><div class="summary">
+      <div class="skin" style="background:${r.hex}" role="img" aria-label="Measured skin color ${r.hex}"></div>
+      <div class="facts">
+        <span class="eyebrow">${r.undertone === 'Uncertain' ? 'Undertone' : 'Estimated undertone'}</span>
+        <div class="big">${esc(r.undertone)}<span class="muted" style="font-size:.5em"> · ${esc(r.family)}</span></div>
+        <div class="meta"><span class="tag">${esc(r.depth)} depth</span><span class="tag">${r.hex}</span><span class="tag">L ${r.L.toFixed(0)} · a ${r.a.toFixed(0)} · b ${r.b.toFixed(0)}</span></div>
+        <div><div class="meter" aria-hidden="true"><b style="left:${pct}%"></b></div><div class="scale"><span>Cool</span><span>Neutral</span><span>Warm</span></div></div>
+        <div class="conf">
+          <svg class="ring" viewBox="0 0 64 64" role="img" aria-label="Confidence ${r.confidence} percent"><circle cx="32" cy="32" r="26" stroke="var(--line)"/><circle cx="32" cy="32" r="26" stroke="${ringColor}" stroke-linecap="round" stroke-dasharray="${circ * r.confidence / 100} ${circ}" transform="rotate(-90 32 32)"/></svg>
+          <div><b>${r.confidence}% confidence</b><p class="muted" style="font-size:.88rem">${r.confidence >= 75 ? 'Clear reading.' : r.confidence >= 55 ? 'Reasonable reading. Retake in daylight to firm it up.' : 'Low confidence. Try a drape test.'}</p></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="card span2"><h2 style="font-size:1.5rem">Colors to wear</h2><p class="muted">Tap any color to copy its code. Listed best match first for your depth.</p><div class="chips">${r.palette.map(c => chip(c)).join('')}</div></div>
+    <div class="card"><h3>Test with care</h3><p class="muted" style="font-size:.92rem">These can dull your skin near the face. Wear them as bottoms, shoes or bags, or add a scarf in a better color.</p><div class="chips">${r.avoid.map(c => chip(c, 'avoid')).join('')}</div></div>
+    <div class="card"><h3>Basics and metals</h3><div class="chips">${r.bases.map(c => chip(c)).join('')}</div><p><b>Metals:</b> ${esc(r.metals)}.</p><p class="muted" style="font-size:.92rem">${esc(r.depthNote)}</p></div>
+    <div class="card span2"><h2 style="font-size:1.5rem">Outfit combinations</h2><p class="muted">Top, bottom and an accent such as a bag or scarf, all drawn from your palette.</p>
+      <div class="combos">${r.combos.map(c => `<div class="combo">${outfitSvg(c.top.hex, c.bottom.hex, c.accent.hex)}<div><b>${esc(c.top.name)} + ${esc(c.bottom.name)}</b></div><div class="muted">accent: ${esc(c.accent.name)}</div></div>`).join('')}</div></div>
+    <div class="card span2"><h2 style="font-size:1.5rem">Fashion recommendations</h2><div class="recs">${r.recs.map(x => `<div class="rec"><h3>${esc(x[0])}</h3><p>${esc(x[1])}</p></div>`).join('')}</div></div>
+    <div class="card span2"><h3>Keep this palette</h3>
+      <form class="savebar" id="saveForm"><input id="saveName" type="text" maxlength="40" value="${esc(r.family + ' · ' + date)}" aria-label="Palette name"><button class="btn primary" type="submit">Save palette</button><button class="btn ghost" type="button" id="copyAll">Copy all colors</button><button class="btn ghost" type="button" id="againBtn">Try another photo</button></form>
+      <ul class="notes">${r.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul></div>`;
+}
+$('#resBody').addEventListener('click', e => {
+  const c = e.target.closest('[data-hex]'); if (c) { copyText(c.dataset.hex, 'Copied ' + c.dataset.hex); return; }
+  if (e.target.closest('#copyAll')) copyText(paletteText(state.result.family, state.result.palette), 'Palette copied');
+  if (e.target.closest('#againBtn')) go('studio');
+});
+$('#resBody').addEventListener('submit', e => {
+  e.preventDefault();
+  if (state.saved.length >= MAX_SAVED) { toast('You can keep up to 30 palettes. Delete one first.'); return; }
+  const r = state.result, name = ($('#saveName').value || '').trim() || r.family;
+  state.saved.unshift({ ...r, id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, createdAt: Date.now(), source: r.source === 'photo' ? 'photo' : r.source });
+  toast(persist() ? 'Palette saved' : 'Saved for this visit only. Copy the colors to keep them.');
+  renderSaved();
+});
+const paletteText = (name, pal) => name + '\n' + pal.map(c => `${c.name} ${c.hex}`).join('\n');
+
+/* ---------- saved palettes ---------- */
+function loadSaved() { try { const v = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+function persist() { try { localStorage.setItem(KEY, JSON.stringify(state.saved)); return true; } catch (e) { return false; } }
+function renderSaved() {
+  const el = $('#savedList');
+  if (!state.saved.length) {
+    el.innerHTML = `<div class="empty"><h3>Nothing saved yet</h3><p class="muted">Open a result and tap Save palette. It will appear here.</p><a class="btn primary" href="#results">Go to results</a></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="saved-grid">${state.saved.map(s => `
+    <div class="card">
+      <div class="strip" aria-hidden="true">${s.palette.map(c => `<span style="background:${c.hex}"></span>`).join('')}</div>
+      <div><h3>${esc(s.name)}</h3><p class="muted mono" style="font-size:.78rem">${esc(s.undertone)} · ${esc(s.depth)} · ${new Date(s.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p></div>
+      <div class="row-btns"><button class="btn small primary" type="button" data-s="open" data-id="${s.id}">Open</button><button class="btn small ghost" type="button" data-s="copy" data-id="${s.id}">Copy</button><button class="btn small ghost" type="button" data-s="del" data-id="${s.id}">Delete</button></div>
+    </div>`).join('')}</div>`;
+}
+$('#savedList').addEventListener('click', e => {
+  const b = e.target.closest('[data-s]'); if (!b) return;
+  const s = state.saved.find(x => x.id === b.dataset.id); if (!s) return;
+  if (b.dataset.s === 'open') { state.result = { ...s, source: 'saved' }; renderResults(); go('results'); }
+  if (b.dataset.s === 'copy') copyText(paletteText(s.name, s.palette), 'Palette copied');
+  if (b.dataset.s === 'del') {
+    if (b.dataset.armed) { state.saved = state.saved.filter(x => x.id !== s.id); persist(); renderSaved(); toast('Palette deleted'); }
+    else { b.dataset.armed = '1'; b.textContent = 'Tap again to delete'; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = 'Delete'; } }, 3000); }
+  }
+});
+
+/* ---------- start ---------- */
+state.saved = loadSaved();
+state.result = buildResult(hexToRgb('#B27F63'), { mode: 'demo' }, 'example', 'Medium neutral');
+renderResults(); renderSaved(); route();
+</script>
