@@ -74,7 +74,7 @@ main{padding-block:8px 110px}
   display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;transition:transform .15s,background .2s}
 .btn:active{transform:scale(.97)}
 .pickbtn{position:relative;overflow:hidden}
-.pickbtn .fin{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:200px;padding:0;border:0}
+.pickbtn .fin,.pickbtn .vin{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:200px;padding:0;border:0}
 .pickbtn:focus-within{outline:3px solid var(--accent);outline-offset:3px}
 .btn.primary{background:var(--accent);color:var(--on-accent)}
 .btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
@@ -224,6 +224,7 @@ footer{padding-block:8px 24px;color:var(--ink-2);font-size:.84rem}
       <div class="head"><span class="eyebrow">Honest status</span><h2>What is real and what is prototype</h2></div>
       <div class="status">
         <div class="row"><span>Photo upload and selfie capture</span><span class="pill ok">Working</span></div>
+        <div class="row"><span>Video record or upload (the clearest frame is picked automatically)</span><span class="pill ok">Working</span></div>
         <div class="row"><span>Measuring skin pixels from your photo</span><span class="pill ok">Working</span></div>
         <div class="row"><span>Undertone estimate from the measured color</span><span class="pill pro">Prototype rule</span></div>
         <div class="row"><span>Palettes, combinations and style notes</span><span class="pill pro">Hand-written rules</span></div>
@@ -232,7 +233,7 @@ footer{padding-block:8px 24px;color:var(--ink-2);font-size:.84rem}
       </div>
       <div class="panel">
         <h3>Privacy</h3>
-        <p class="muted">The photo is read inside this page and drawn on your screen. It is never sent anywhere. Clearing the photo or closing the page removes it. Saved palettes keep only colors and names, never the photo.</p>
+        <p class="muted">The photo is read inside this page and drawn on your screen. It is never sent anywhere. Videos stay on your device too, and nothing is uploaded. Clearing the photo or closing the page removes it. Saved palettes keep only colors and names, never the photo.</p>
       </div>
       <footer>ColorMuse AI is a styling aid and not a medical or dermatological tool. Results are estimates and depend on lighting and your camera.</footer>
     </section>
@@ -248,7 +249,12 @@ footer{padding-block:8px 24px;color:var(--ink-2);font-size:.84rem}
               <label class="btn primary pickbtn">Upload a photo<input type="file" class="fin" accept="image/*" aria-label="Upload a photo"></label>
               <label class="btn ghost pickbtn">Take a selfie<input type="file" class="fin" accept="image/*" capture="user" aria-label="Take a selfie"></label>
             </div>
-            <p class="muted" style="font-size:.86rem">Taking a selfie opens your phone's camera app.</p>
+            <p class="muted" style="font-size:.86rem">Take a selfie opens your phone's camera app.</p>
+            <div class="row-btns" style="justify-content:center">
+              <label class="btn ghost pickbtn">Record a video<input type="file" class="vin" accept="video/*" capture="user" aria-label="Record a video"></label>
+              <label class="btn ghost pickbtn">Choose a video<input type="file" class="vin" accept="video/*" aria-label="Choose a video"></label>
+            </div>
+            <p class="muted" style="font-size:.86rem">With a video, the page checks several frames and keeps the clearest one. Keep your face in the middle and hold still.</p>
           </div>
           <div class="stagebox" id="stagebox" hidden>
             <div class="stage" id="stage">
@@ -500,8 +506,9 @@ function handleFile(f) {
 }
 function setMsg(t, warn) { const m = $('#studioMsg'); m.textContent = t; m.classList.toggle('warn', !!warn); }
 function drawPhoto(img) {
-  const s = Math.min(1, 720 / Math.max(img.naturalWidth, img.naturalHeight));
-  cv.width = Math.max(1, Math.round(img.naturalWidth * s)); cv.height = Math.max(1, Math.round(img.naturalHeight * s));
+  const iw = img.naturalWidth || img.videoWidth || img.width, ih = img.naturalHeight || img.videoHeight || img.height;
+  const s = Math.min(1, 720 / Math.max(iw, ih));
+  cv.width = Math.max(1, Math.round(iw * s)); cv.height = Math.max(1, Math.round(ih * s));
   ctx.drawImage(img, 0, 0, cv.width, cv.height);
   state.hasPhoto = true; state.point = null;
   $('#drop').hidden = true; $('#stagebox').hidden = false; $('#guide').hidden = false; $('#marker').hidden = true;
@@ -652,6 +659,63 @@ $('#savedList').addEventListener('click', e => {
 state.saved = loadSaved();
 state.result = buildResult(hexToRgb('#B27F63'), { mode: 'demo' }, 'example', 'Medium neutral');
 renderResults(); renderSaved(); route();
+/* ===== ColorMuse video: clearest-frame video reading ===== */
+let videoBusy = false;
+
+/* ---- video: check several frames, keep the clearest ---- */
+function waitFor(el, ev, ms) {
+  return new Promise((res, rej) => {
+    const done = f => { clearTimeout(t); el.removeEventListener(ev, ok); el.removeEventListener('error', bad); f(); };
+    const ok = () => done(res), bad = () => done(() => rej(new Error('media')));
+    const t = setTimeout(() => done(() => rej(new Error('timeout'))), ms);
+    el.addEventListener(ev, ok); el.addEventListener('error', bad);
+  });
+}
+const seekTo = (v, t) => { const p = waitFor(v, 'seeked', 6000); v.currentTime = t; return p; };
+function frameScore(data, w, h) {
+  const st = sampleSkin(data, w, h, null);
+  if (!st) return 0;
+  const L = rgbToLab(st.rgb[0], st.rgb[1], st.rgb[2]).L;
+  const expo = (L < 30 || L > 90) ? 0.2 : (L < 40 || L > 85) ? 0.6 : 1;
+  return st.coverage * 0.5 + clamp(1 - st.hueSd / 15, 0, 1) * 0.2 + expo * 0.2 + (1 - clamp(st.clip * 2, 0, 1)) * 0.1;
+}
+async function handleVideo(f) {
+  if (!f || videoBusy) return;
+  go('studio');
+  if (!/^video\//.test(f.type)) { setMsg('Please choose a video file.', true); return; }
+  if (f.size > 300 * 1024 * 1024) { setMsg('That video is larger than 300 MB. Choose a shorter one.', true); return; }
+  videoBusy = true; setMsg('Reading your video...');
+  const url = URL.createObjectURL(f), v = document.createElement('video');
+  v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
+  try {
+    await waitFor(v, 'loadeddata', 20000);
+    const vw = v.videoWidth, vh = v.videoHeight;
+    if (!vw || !vh) throw new Error('media');
+    const dur = isFinite(v.duration) && v.duration > 0 ? v.duration : 3;
+    const N = clamp(Math.round(dur * 3), 6, 14), sc = Math.min(1, 480 / Math.max(vw, vh));
+    const w = Math.round(vw * sc), h = Math.round(vh * sc);
+    const tc = document.createElement('canvas'); tc.width = w; tc.height = h;
+    const tx = tc.getContext('2d', { willReadFrequently: true });
+    let best = -1, bestT = dur / 2;
+    for (let i = 0; i < N; i++) {
+      const t = dur * (i + 0.5) / N;
+      setMsg(`Checking frame ${i + 1} of ${N}...`);
+      await seekTo(v, t);
+      tx.drawImage(v, 0, 0, w, h);
+      const sc2 = frameScore(tx.getImageData(0, 0, w, h).data, w, h);
+      if (sc2 > best) { best = sc2; bestT = t; }
+    }
+    await seekTo(v, bestT);
+    const fc = document.createElement('canvas'); fc.width = vw; fc.height = vh;
+    fc.getContext('2d').drawImage(v, 0, 0);
+    drawPhoto(fc);
+    setMsg(best > 0 ? `Picked the clearest of ${N} frames from your video. Tap a cheek or forehead, then press Analyze.`
+      : 'No clear skin was found in the video, so the middle frame is shown. Tap a cheek or forehead, or retry in daylight with your face in the middle.', best <= 0);
+  } catch (e) {
+    setMsg('This video could not be read here. Try a short video recorded with your phone camera, or use a photo.', true);
+  } finally { URL.revokeObjectURL(url); videoBusy = false; }
+}
+document.querySelectorAll('.vin').forEach(inp => inp.addEventListener('change', e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; handleVideo(f); }));
 </script>
 </body>
 </html>
